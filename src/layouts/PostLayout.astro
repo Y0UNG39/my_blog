@@ -1,0 +1,66 @@
+---
+import Base from './Base.astro';
+import TOC from '../components/TOC.astro';
+
+interface Props {
+  title: string;
+  description: string;
+  date: Date;
+  tags: string[];
+  category: string;
+  cover?: string;
+  headings: { depth: number; slug: string; text: string }[];
+  prevPost?: { slug: string; title: string } | null;
+  nextPost?: { slug: string; title: string } | null;
+}
+
+const { title, description, date, tags, category, cover, headings, prevPost, nextPost } = Astro.props;
+const dateStr = date.toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric' });
+---
+
+<Base title={title} description={description}>
+  <article class="max-w-3xl mx-auto">
+    {cover && (
+      <img src={cover} alt={title} class="w-full h-64 object-cover rounded-xl mb-8" loading="lazy" />
+    )}
+    <header class="mb-8">
+      <h1 class="text-3xl font-bold text-[var(--color-text)] dark:text-[var(--color-dark-text)] mb-3">{title}</h1>
+      <div class="flex flex-wrap items-center gap-2 text-sm text-[var(--color-text-secondary)] dark:text-[var(--color-dark-text-secondary)]">
+        <time datetime={date.toISOString()}>{dateStr}</time>
+        <span>·</span>
+        <a href={`/categories/${category}`} class="hover:text-[var(--color-accent)] transition-colors">{category}</a>
+        {tags.length > 0 && (
+          <>
+            <span>·</span>
+            {tags.map((tag, i) => (
+              <>
+                <a href={`/tags/${tag}`} class="hover:text-[var(--color-accent)] transition-colors">#{tag}</a>
+                {i < tags.length - 1 && <span>/</span>}
+              </>
+            ))}
+          </>
+        )}
+      </div>
+    </header>
+    <div class="flex gap-8">
+      <div class="flex-1 min-w-0 prose dark:prose-invert">
+        <slot />
+      </div>
+      <TOC headings={headings} />
+    </div>
+    <nav class="mt-12 pt-8 border-t border-[var(--color-border)] dark:border-[var(--color-dark-border)] flex justify-between">
+      {prevPost ? (
+        <a href={`/blog/${prevPost.slug}`} class="group">
+          <div class="text-xs text-[var(--color-text-secondary)] dark:text-[var(--color-dark-text-secondary)]">上一篇</div>
+          <div class="text-[var(--color-text)] dark:text-[var(--color-dark-text)] group-hover:text-[var(--color-accent)] transition-colors">{prevPost.title}</div>
+        </a>
+      ) : <div />}
+      {nextPost ? (
+        <a href={`/blog/${nextPost.slug}`} class="group text-right">
+          <div class="text-xs text-[var(--color-text-secondary)] dark:text-[var(--color-dark-text-secondary)]">下一篇</div>
+          <div class="text-[var(--color-text)] dark:text-[var(--color-dark-text)] group-hover:text-[var(--color-accent)] transition-colors">{nextPost.title}</div>
+        </a>
+      ) : <div />}
+    </nav>
+  </article>
+</Base>

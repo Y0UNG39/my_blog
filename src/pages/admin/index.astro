@@ -1,0 +1,102 @@
+---
+import Base from '../../layouts/Base.astro';
+import { getCollection } from 'astro:content';
+
+if (!import.meta.env.DEV) {
+  return new Response('Not Found', { status: 404 });
+}
+
+const posts = (await getCollection('blog'))
+  .sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
+---
+
+<Base title="管理后台">
+  <div class="max-w-4xl mx-auto">
+    <div class="flex items-center justify-between mb-8">
+      <h1 class="text-2xl font-bold text-[var(--color-text)] dark:text-[var(--color-dark-text)]">文章管理</h1>
+      <a
+        href="/admin/edit"
+        class="px-4 py-2 bg-[var(--color-accent)] text-white rounded-lg hover:bg-[var(--color-accent-hover)] transition-colors text-sm"
+      >
+        + 新建文章
+      </a>
+    </div>
+    <div class="bg-white dark:bg-[var(--color-dark-bg-secondary)] rounded-xl border border-[var(--color-border)] dark:border-[var(--color-dark-border)] overflow-hidden">
+      <table class="w-full text-sm">
+        <thead>
+          <tr class="border-b border-[var(--color-border)] dark:border-[var(--color-dark-border)] bg-[var(--color-bg-secondary)] dark:bg-[var(--color-dark-bg)]">
+            <th class="text-left px-4 py-3 font-medium text-[var(--color-text-secondary)] dark:text-[var(--color-dark-text-secondary)]">标题</th>
+            <th class="text-left px-4 py-3 font-medium text-[var(--color-text-secondary)] dark:text-[var(--color-dark-text-secondary)]">分类</th>
+            <th class="text-left px-4 py-3 font-medium text-[var(--color-text-secondary)] dark:text-[var(--color-dark-text-secondary)]">标签</th>
+            <th class="text-left px-4 py-3 font-medium text-[var(--color-text-secondary)] dark:text-[var(--color-dark-text-secondary)]">日期</th>
+            <th class="text-left px-4 py-3 font-medium text-[var(--color-text-secondary)] dark:text-[var(--color-dark-text-secondary)]">状态</th>
+            <th class="text-right px-4 py-3 font-medium text-[var(--color-text-secondary)] dark:text-[var(--color-dark-text-secondary)]">操作</th>
+          </tr>
+        </thead>
+        <tbody>
+          {posts.map((post) => (
+            <tr class="border-b border-[var(--color-border)] dark:border-[var(--color-dark-border)] last:border-b-0 hover:bg-[var(--color-bg-secondary)] dark:hover:bg-[var(--color-dark-bg)] transition-colors">
+              <td class="px-4 py-3">
+                <a href={`/admin/edit?slug=${post.id}`} class="text-[var(--color-text)] dark:text-[var(--color-dark-text)] hover:text-[var(--color-accent)] transition-colors font-medium">
+                  {post.data.title}
+                </a>
+              </td>
+              <td class="px-4 py-3 text-[var(--color-text-secondary)] dark:text-[var(--color-dark-text-secondary)]">{post.data.category}</td>
+              <td class="px-4 py-3">
+                <div class="flex flex-wrap gap-1">
+                  {post.data.tags.map((tag) => (
+                    <span class="text-xs px-1.5 py-0.5 rounded bg-[var(--color-bg-secondary)] dark:bg-[var(--color-dark-bg)] text-[var(--color-text-secondary)] dark:text-[var(--color-dark-text-secondary)]">
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+              </td>
+              <td class="px-4 py-3 text-[var(--color-text-secondary)] dark:text-[var(--color-dark-text-secondary)] text-xs">
+                {post.data.date.toLocaleDateString('zh-CN')}
+              </td>
+              <td class="px-4 py-3">
+                {post.data.draft ? (
+                  <span class="text-xs px-2 py-0.5 rounded-full bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400">草稿</span>
+                ) : (
+                  <span class="text-xs px-2 py-0.5 rounded-full bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400">已发布</span>
+                )}
+              </td>
+              <td class="px-4 py-3 text-right">
+                <button
+                  class="text-xs text-red-500 hover:text-red-700 transition-colors delete-btn"
+                  data-slug={post.id}
+                >
+                  删除
+                </button>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      {posts.length === 0 && (
+        <div class="p-8 text-center text-[var(--color-text-secondary)] dark:text-[var(--color-dark-text-secondary)]">
+          还没有文章，点击上方按钮创建第一篇。
+        </div>
+      )}
+    </div>
+  </div>
+
+  <script is:inline>
+    document.querySelectorAll('.delete-btn').forEach((btn) => {
+      btn.addEventListener('click', async () => {
+        const slug = btn.dataset.slug;
+        if (!confirm(`确定要删除「${slug}」吗？此操作不可恢复。`)) return;
+        const res = await fetch('/api/admin/delete', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ slug }),
+        });
+        if (res.ok) {
+          window.location.reload();
+        } else {
+          alert('删除失败');
+        }
+      });
+    });
+  </script>
+</Base>

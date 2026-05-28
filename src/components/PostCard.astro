@@ -1,0 +1,41 @@
+---
+interface Props {
+  title: string;
+  date: Date;
+  description: string;
+  tags: string[];
+  category: string;
+  slug: string;
+}
+
+const { title, date, description, tags, category, slug } = Astro.props;
+const dateStr = date.toLocaleDateString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit' });
+---
+
+<article class="py-6 border-b border-[var(--color-border)] dark:border-[var(--color-dark-border)] last:border-b-0">
+  <div class="flex items-center gap-2 text-sm text-[var(--color-text-secondary)] dark:text-[var(--color-dark-text-secondary)] mb-2">
+    <time datetime={date.toISOString()}>{dateStr}</time>
+    <span>·</span>
+    <a href={`/categories/${category}`} class="hover:text-[var(--color-accent)] transition-colors">{category}</a>
+  </div>
+  <h2 class="text-xl font-semibold mb-2">
+    <a href={`/blog/${slug}`} class="text-[var(--color-text)] dark:text-[var(--color-dark-text)] hover:text-[var(--color-accent)] dark:hover:text-[var(--color-accent)] transition-colors">
+      {title}
+    </a>
+  </h2>
+  {description && (
+    <p class="text-[var(--color-text-secondary)] dark:text-[var(--color-dark-text-secondary)] mb-3 line-clamp-2">{description}</p>
+  )}
+  {tags.length > 0 && (
+    <div class="flex flex-wrap gap-2">
+      {tags.map((tag) => (
+        <a
+          href={`/tags/${tag}`}
+          class="text-xs px-2 py-0.5 rounded-full bg-[var(--color-bg-secondary)] dark:bg-[var(--color-dark-bg-secondary)] text-[var(--color-text-secondary)] dark:text-[var(--color-dark-text-secondary)] hover:text-[var(--color-accent)] hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
+        >
+          #{tag}
+        </a>
+      ))}
+    </div>
+  )}
+</article>

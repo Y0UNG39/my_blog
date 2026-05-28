@@ -1,0 +1,30 @@
+---
+import Base from '../layouts/Base.astro';
+import PostCard from '../components/PostCard.astro';
+import SearchModal from '../components/SearchModal.astro';
+import { getCollection } from 'astro:content';
+
+const posts = (await getCollection('blog', ({ data }) => !data.draft))
+  .sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
+---
+
+<Base title="首页" description="我的个人博客">
+  <div class="space-y-2">
+    {posts.map((post) => (
+      <PostCard
+        title={post.data.title}
+        date={post.data.date}
+        description={post.data.description}
+        tags={post.data.tags}
+        category={post.data.category}
+        slug={post.id}
+      />
+    ))}
+    {posts.length === 0 && (
+      <p class="text-center py-16 text-[var(--color-text-secondary)] dark:text-[var(--color-dark-text-secondary)]">
+        还没有文章，去写第一篇吧！
+      </p>
+    )}
+  </div>
+  <SearchModal />
+</Base>

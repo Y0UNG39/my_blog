@@ -1,0 +1,30 @@
+---
+interface Props {
+  headings: { depth: number; slug: string; text: string }[];
+}
+
+const { headings } = Astro.props;
+const filteredHeadings = headings.filter((h) => h.depth >= 2 && h.depth <= 3);
+---
+
+{filteredHeadings.length > 0 && (
+  <nav class="hidden xl:block sticky top-20 w-56 shrink-0">
+    <h4 class="text-sm font-semibold text-[var(--color-text)] dark:text-[var(--color-dark-text)] mb-3">目录</h4>
+    <ul class="space-y-1.5 text-sm border-l border-[var(--color-border)] dark:border-[var(--color-dark-border)]">
+      {filteredHeadings.map((heading) => (
+        <li>
+          <a
+            href={`#${heading.slug}`}
+            class:list={[
+              'block transition-colors hover:text-[var(--color-accent)]',
+              heading.depth === 2 ? 'pl-3' : 'pl-6',
+              'text-[var(--color-text-secondary)] dark:text-[var(--color-dark-text-secondary)]',
+            ]}
+          >
+            {heading.text}
+          </a>
+        </li>
+      ))}
+    </ul>
+  </nav>
+)}

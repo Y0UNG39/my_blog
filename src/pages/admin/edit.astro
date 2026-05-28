@@ -1,0 +1,155 @@
+---
+import Base from '../../layouts/Base.astro';
+import { getCollection } from 'astro:content';
+
+if (!import.meta.env.DEV) {
+  return new Response('Not Found', { status: 404 });
+}
+
+const slug = Astro.url.searchParams.get('slug');
+let postData = {
+  title: '',
+  date: new Date().toISOString().split('T')[0],
+  tags: '',
+  category: '未分类',
+  description: '',
+  cover: '',
+  draft: false,
+  content: '',
+  slug: '',
+};
+
+if (slug) {
+  const posts = await getCollection('blog');
+  const post = posts.find((p) => p.id === slug);
+  if (post) {
+    const raw = await post.readFile();
+    const match = raw.match(/^---\n([\s\S]*?)\n---\n?([\s\S]*)$/);
+    if (match) {
+      const fm = match[1];
+      const titleMatch = fm.match(/^title:\s*["']?(.*?)["']?\s*$/m);
+      const dateMatch = fm.match(/^date:\s*(.*?)\s*$/m);
+      const tagsMatch = fm.match(/^tags:\s*\[(.*?)\]\s*$/m);
+      const catMatch = fm.match(/^category:\s*(.*?)\s*$/m);
+      const descMatch = fm.match(/^description:\s*["']?(.*?)["']?\s*$/m);
+      const coverMatch = fm.match(/^cover:\s*["']?(.*?)["']?\s*$/m);
+      const draftMatch = fm.match(/^draft:\s*(.*?)\s*$/m);
+      postData = {
+        title: titleMatch?.[1] || '',
+        date: dateMatch?.[1] || '',
+        tags: tagsMatch?.[1] || '',
+        category: catMatch?.[1] || '未分类',
+        description: descMatch?.[1] || '',
+        cover: coverMatch?.[1] || '',
+        draft: draftMatch?.[1] === 'true',
+        content: match[2],
+        slug: slug,
+      };
+    }
+  }
+}
+---
+
+<Base title={slug ? '编辑文章' : '新建文章'}>
+  <div class="max-w-3xl mx-auto">
+    <div class="flex items-center justify-between mb-8">
+      <h1 class="text-2xl font-bold text-[var(--color-text)] dark:text-[var(--color-dark-text)]">
+        {slug ? '编辑文章' : '新建文章'}
+      </h1>
+      <a href="/admin" class="text-sm text-[var(--color-accent)] hover:underline">&larr; 返回列表</a>
+    </div>
+    <form id="post-form" class="space-y-6">
+      <div>
+        <label class="block text-sm font-medium text-[var(--color-text)] dark:text-[var(--color-dark-text)] mb-1">标题</label>
+        <input type="text" name="title" value={postData.title} required
+          class="w-full px-3 py-2 rounded-lg border border-[var(--color-border)] dark:border-[var(--color-dark-border)] bg-white dark:bg-[var(--color-dark-bg)] text-[var(--color-text)] dark:text-[var(--color-dark-text)] outline-none focus:border-[var(--color-accent)] transition-colors" />
+      </div>
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="block text-sm font-medium text-[var(--color-text)] dark:text-[var(--color-dark-text)] mb-1">日期</label>
+          <input type="date" name="date" value={postData.date}
+            class="w-full px-3 py-2 rounded-lg border border-[var(--color-border)] dark:border-[var(--color-dark-border)] bg-white dark:bg-[var(--color-dark-bg)] text-[var(--color-text)] dark:text-[var(--color-dark-text)] outline-none focus:border-[var(--color-accent)] transition-colors" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-[var(--color-text)] dark:text-[var(--color-dark-text)] mb-1">分类</label>
+          <input type="text" name="category" value={postData.category}
+            class="w-full px-3 py-2 rounded-lg border border-[var(--color-border)] dark:border-[var(--color-dark-border)] bg-white dark:bg-[var(--color-dark-bg)] text-[var(--color-text)] dark:text-[var(--color-dark-text)] outline-none focus:border-[var(--color-accent)] transition-colors" />
+        </div>
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-[var(--color-text)] dark:text-[var(--color-dark-text)] mb-1">标签（逗号分隔）</label>
+        <input type="text" name="tags" value={postData.tags}
+          placeholder="标签1, 标签2, 标签3"
+          class="w-full px-3 py-2 rounded-lg border border-[var(--color-border)] dark:border-[var(--color-dark-border)] bg-white dark:bg-[var(--color-dark-bg)] text-[var(--color-text)] dark:text-[var(--color-dark-text)] outline-none focus:border-[var(--color-accent)] transition-colors" />
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-[var(--color-text)] dark:text-[var(--color-dark-text)] mb-1">摘要</label>
+        <input type="text" name="description" value={postData.description}
+          class="w-full px-3 py-2 rounded-lg border border-[var(--color-border)] dark:border-[var(--color-dark-border)] bg-white dark:bg-[var(--color-dark-bg)] text-[var(--color-text)] dark:text-[var(--color-dark-text)] outline-none focus:border-[var(--color-accent)] transition-colors" />
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-[var(--color-text)] dark:text-[var(--color-dark-text)] mb-1">封面图 URL（可选）</label>
+        <input type="text" name="cover" value={postData.cover}
+          class="w-full px-3 py-2 rounded-lg border border-[var(--color-border)] dark:border-[var(--color-dark-border)] bg-white dark:bg-[var(--color-dark-bg)] text-[var(--color-text)] dark:text-[var(--color-dark-text)] outline-none focus:border-[var(--color-accent)] transition-colors" />
+      </div>
+      <div class="flex items-center gap-2">
+        <input type="checkbox" name="draft" id="draft" checked={postData.draft}
+          class="rounded border-[var(--color-border)] dark:border-[var(--color-dark-border)]" />
+        <label for="draft" class="text-sm text-[var(--color-text)] dark:text-[var(--color-dark-text)]">保存为草稿</label>
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-[var(--color-text)] dark:text-[var(--color-dark-text)] mb-1">正文（Markdown）</label>
+        <textarea name="content" rows="20"
+          class="w-full px-3 py-2 rounded-lg border border-[var(--color-border)] dark:border-[var(--color-dark-border)] bg-white dark:bg-[var(--color-dark-bg)] text-[var(--color-text)] dark:text-[var(--color-dark-text)] outline-none focus:border-[var(--color-accent)] transition-colors font-mono text-sm leading-relaxed"
+        >{postData.content}</textarea>
+      </div>
+      <div class="flex items-center gap-3">
+        <button type="submit"
+          class="px-6 py-2 bg-[var(--color-accent)] text-white rounded-lg hover:bg-[var(--color-accent-hover)] transition-colors text-sm font-medium">
+          {slug ? '保存修改' : '创建文章'}
+        </button>
+        <span id="save-status" class="text-sm text-[var(--color-text-secondary)] dark:text-[var(--color-dark-text-secondary)]"></span>
+      </div>
+    </form>
+  </div>
+
+  <script is:inline>
+    const form = document.getElementById('post-form');
+    const status = document.getElementById('save-status');
+    const initialSlug = new URLSearchParams(window.location.search).get('slug') || '';
+
+    form?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const fd = new FormData(form);
+      const tagsStr = fd.get('tags') || '';
+      const tags = tagsStr.split(',').map((t) => t.trim()).filter(Boolean);
+
+      const body = {
+        slug: initialSlug || fd.get('title').toLowerCase().replace(/[^a-z0-9一-鿿]+/g, '-').replace(/^-|-$/g, ''),
+        title: fd.get('title'),
+        date: fd.get('date'),
+        category: fd.get('category') || '未分类',
+        tags,
+        description: fd.get('description') || '',
+        cover: fd.get('cover') || '',
+        draft: fd.has('draft'),
+        content: fd.get('content'),
+      };
+
+      status.textContent = '保存中...';
+      const res = await fetch('/api/admin/save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      if (res.ok) {
+        status.textContent = '已保存！';
+        if (!initialSlug) {
+          window.location.href = '/admin';
+        }
+      } else {
+        status.textContent = '保存失败';
+      }
+    });
+  </script>
+</Base>
